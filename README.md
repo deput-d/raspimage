@@ -1,3 +1,6 @@
+# raspimage
+### streamlined headless raspbian image creator
+
 # Purpose
 This tool downloads the latest raspbian image and sets up g_cdc module to run at bootime to allow for a raspberry pi to be setup with out a monitor or keyboard.
 
