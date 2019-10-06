@@ -75,10 +75,22 @@ main () {
   echo -e "Created $image_name. To burn to disk use 'dd bs=4M if=$image_name of=/dev/sdX conv=fsync'\n\n"
 }
 
-if [ -z $1 ]; then
-  main || exit 1
-else
-  case $1 in
+help () {
+  echo -e "\nUsage: { sudo $0 [OPTIONS] } ."
+  echo
+  echo -e "--run|-r\t\t Run the main function. This will download, extract, mount, and configure the newest raspbian image.\n"
+  echo -e "--download|-d\t\t Download the newest raspbian image in the present working directory.\n"
+  echo -e "--mount|-m\t\t Downloads and mounts the newest raspbian image using losetup and then mount the underlying partitions in ./root and ./boot in the present working directory.\n"
+  echo -e "--cleanup|-c\t\t Cleanup any files that were created using any of the other options. This will not delete the customized image.\n"
+  echo -e "--root-config|-r\t Download and customize just the root partition of the raspbian image.\n"
+  echo -e "--boot-config|-b\t Download and customize just the boot partition of the raspbian image.\n"
+  echo -e "--help|?\t\t Display this help message.\n\n"
+}
+
+case $1 in
+    --run|-r)
+        main || exit 1
+      ;;
     --download|-d)
         get_image
       ;;
@@ -91,14 +103,13 @@ else
     --boot-config|-b)
         get_image && mount_image && mount_partitions && configure_boot; cleanup
       ;;
-    --root-config|-r)
+    --root-config|-C)
         get_image && mount_image && mount_partitions && configure_root; cleanup
       ;;
-    --help)
-        echo -e "\nUsage: { sudo $0 } . \n\n--mount\t-m Used to mount the image using losetup and then mount the underlying partitions\n More pending...\n"
+    --help|?)
+        help
       ;;
       *)
         echo -e "Usage: { sudo $0 } . See help for more information: { $0 --help }"
       ;;
-  esac
-fi
+    esac
