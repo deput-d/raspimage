@@ -80,7 +80,7 @@ help () {
   echo
   echo -e "--run|-r\t\t Run the main function. This will download, extract, mount, and configure the newest raspbian image.\n"
   echo -e "--download|-d\t\t Download the newest raspbian image in the present working directory.\n"
-  echo -e "--mount|-m\t\t Downloads and mounts the newest raspbian image using losetup and then mount the underlying partitions in ./root and ./boot in the present working directory.\n"
+  echo -e "--mount|-m\t\t Downloads and mounts the newest raspbian image using losetup and then mount the underlying partitions in\n\t\t\t./root and ./boot in the present working directory.\n"
   echo -e "--cleanup|-c\t\t Cleanup any files that were created using any of the other options. This will not delete the customized image.\n"
   echo -e "--root-config|-r\t Download and customize just the root partition of the raspbian image.\n"
   echo -e "--boot-config|-b\t Download and customize just the boot partition of the raspbian image.\n"
