@@ -1,0 +1,104 @@
+#! /bin/bash
+
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root"
+   exit 1
+fi
+
+working_dir=$PWD
+image="$PWD/raspbian_lite_latest"
+
+get_image () {
+    wget -N https://downloads.raspberrypi.org/raspbian_lite_latest
+}
+
+cleanup () {
+  echo -e "\ncleaning up...\n"
+  cd $working_dir
+  umount ./boot ./root
+  rm -rf ./boot ./root
+  losetup -d /dev/loop0
+  echo -e "cleanup complete.\n\n"
+}
+
+mount_partitions () {
+  mkdir -p $working_dir/boot
+  mkdir -p $working_dir/root
+  mount /dev/loop0p1 $working_dir/boot
+  mount /dev/loop0p2 $working_dir/root
+}
+
+install_unzip ()
+{
+  apt-get install unzip && unzip $image || exit 1
+}
+
+mount_image () {
+  image_name=$(zipinfo -1 $image)
+  echo -e "\nMounting "$image_name"...\n"
+  if ! test -f $image_name; then
+    unzip $image || install_unzip
+  fi
+  losetup -f --show -P $image_name || exit_code=true
+  if [ "$exit_code" = true ]; then
+    echo -e "\nImage mount failed. exiting... \n\n"; cleanup; exit 1
+  fi
+}
+
+configure_boot () {
+  module=g_cdc
+  #module=g_ether
+  echo -e "\nconfiguring boot...\n"
+  cd $working_dir/boot || exit_code=true
+  if [ "$exit_code" = true ]; then
+    echo -e "\nConfigure boot failed. exiting... \n\n"; cleanup; exit 1
+  fi
+  grep dtoverlay=dwc2 config.txt || echo "dtoverlay=dwc2" >> ./config.txt
+  touch ssh
+  grep modules-load=dwc2,$module cmdline.txt || sed -i "s/\brootwait\b/& modules-load=dwc2,$module/" ./cmdline.txt
+  echo "done"
+}
+
+configure_root () {
+  echo -e "\nconfiguring root...\n"
+  cd $working_dir/root || exit_code=true
+  if [ "$exit_code" = true ]; then
+    echo -e "\nConfigure root failed. exiting... \n\n"; cleanup; exit 1
+  fi
+  ln -s /lib/systemd/system/getty@.service etc/systemd/system/getty.target.wants/gtty@ttyGS0.service -f
+  echo "done"
+}
+
+main () {
+  get_image || echo "get image failed"
+  mount_image && mount_partitions && configure_boot; configure_root; cleanup
+  echo -e "Created $image_name. To burn to disk use 'dd bs=4M if=$image_name of=/dev/sdX conv=fsync'\n\n"
+}
+
+if [ -z $1 ]; then
+  main || exit 1
+else
+  case $1 in
+    --download|-d)
+        get_image
+      ;;
+    --mount|-m)
+        get_image && mount_image && mount_partitions
+      ;;
+    --cleanup|-c)
+        cleanup
+      ;;
+    --boot-config|-b)
+        get_image && mount_image && mount_partitions && configure_boot; cleanup
+      ;;
+    --root-config|-r)
+        get_image && mount_image && mount_partitions && configure_root; cleanup
+      ;;
+    --help)
+        echo -e "\nUsage: { sudo $0 } . \n\n--mount\t-m Used to mount the image using losetup and then mount the underlying partitions\n More pending...\n"
+      ;;
+      *)
+        echo -e "Usage: { sudo $0 } . See help for more information: { $0 --help }"
+      ;;
+  esac
+fi
