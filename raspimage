@@ -65,7 +65,8 @@ configure_root () {
   if [ "$exit_code" = true ]; then
     echo -e "\nConfigure root failed. exiting... \n\n"; cleanup; exit 1
   fi
-  ln -s lib/systemd/system/getty@.service etc/systemd/system/getty.target.wants/gtty@ttyGS0.service -f
+  ln -s /lib/systemd/system/getty@.service 
+etc/systemd/system/getty.target.wants/gtty@ttyGS0.service -f
   echo "done"
 }
 
